@@ -41,7 +41,7 @@ flowchart LR
   end
   subgraph review [검수·편집]
     G[편집 툴 검수]
-    H[자막·속도·재변환 조정]
+    H[자막·오디오·속도·재변환 조정]
   end
   subgraph out [산출·송출]
     I[Export]
@@ -53,7 +53,7 @@ flowchart LR
 
 1. **등록**: 방송일·뉴스 메타를 등록하고 원본 영상을 업로드한다.
 2. **자동 처리**: 백그라운드 작업 큐에서 STT → 쉬운말 변환 → TTS를 순차 실행한다.
-3. **검수·편집**: 처리 완료 후 편집 툴에서 자막 위치·길이·속도·쉬운말 재변환을 조정한다.
+3. **검수·편집**: 처리 완료 후 편집 툴에서 multi-track 타임라인·볼륨·자막·속도·쉬운말 재변환을 조정한다.
 4. **산출·송출**: Export로 단일 영상을 생성하고, 방송/송출 대상으로 전송한다.
 5. **아카이브**: 송출 완료 항목은 날짜·뉴스별로 조회·재송출·삭제가 가능하다.
 
@@ -143,6 +143,8 @@ stateDiagram-v2
 | STT-03 | 자막 파일 생성 | SRT/VTT 형식, 타임코드(in/out) 포함 |
 | STT-04 | 세그먼트 분리 | 문장·발화 단위 `SubtitleSegment` 생성 |
 | STT-05 | 원문 보존 | STT 결과를 `originalText`로 불변 저장 |
+| STT-06 | 화자 구분 | STT 결과에 `speakerId` 부여(다화자 뉴스 대응) |
+| STT-07 | 배경음 분리 | 원본 영상에서 BGM·배경음을 별도 오디오 트랙으로 추출·표시 |
 
 ### 3.5 쉬운말 변환
 
@@ -173,16 +175,22 @@ stateDiagram-v2
 |----|------|------|
 | ED-01 | 자막 오버레이 미리보기 | 변환 자막을 영상 위에 실시간 표시 |
 | ED-02 | 자막 보이기/안보이기 | 프리뷰·타임라인에서 자막 오버레이 표시 여부 토글(편집·Export 설정과 별도) |
-| ED-03 | 위치 조정 | 세그먼트별 x, y (또는 앵커·마진) 조정 |
-| ED-04 | 길이 조정 | in/out 타임코드 드래그·입력으로 표시 구간 변경 |
+| ED-03 | 위치 조정 | 프리뷰 자막 드래그로 x, y 조정(우측 패널 숫자 입력 없음) |
+| ED-04 | 길이 조정 | 타임라인 클립 trim으로 in/out 변경(우측 패널 숫자 입력 없음) |
 | ED-05 | 구간 속도 조절 | 문장 단위 재생 속도 **1.0 ~ 1.1배** (상한 1.1) |
 | ED-06 | 속도-길이 맞춤 | 쉬운말+TTS가 원 구간보다 길 때 속도 상향으로 원 길이에 근접 |
 | ED-07 | 쉬운말 재변환 | 선택 세그먼트에 대해 쉬운말 변환 API 재호출(EZ-05, EZ-06) |
 | ED-08 | 임의 위치 재생 | playhead seek, 스크럽 지원 |
 | ED-09 | 더빙 동기 재생 | TTS 오디오와 영상(및 자막) 동기 재생 |
 | ED-10 | 비파괴 편집 | 원본 영상·STT·초기 변환본 보존, 편집은 프로젝트 레이어에 저장 |
-| ED-11 | 타임라인 UI | 영상·자막 블록·TTS 웨이브폼 트랙 |
+| ED-11 | Multi-track 타임라인 | Video / Subtitle / Speaker×N / Background 트랙, 클립 드래그·trim |
 | ED-12 | 자동 저장·되돌리기 | 편집 이력 스냅샷, undo/redo |
+| ED-13 | 트랙 타입·표기 | `video`, `subtitle`, `speaker`, `background` 타입별 라벨·색상 |
+| ED-14 | 트랙 제어 | 트랙 mute / solo / lock |
+| ED-15 | 클립별 볼륨 | 문장(TTS·화자) 클립 gain (dB 또는 0–100%) |
+| ED-16 | 트랙 fader | 트랙 단위 볼륨 |
+| ED-17 | 마스터·레벨링 | 마스터 fader, 자동 레벨(normalize/loudness match, 목표 LUFS 예: -16) |
+| ED-18 | 배경음 ducking | 화자/TTS 재생 구간 배경음 자동 감쇄(선택, 초기는 수동 fader) |
 
 ### 3.8 Export
 
@@ -190,11 +198,12 @@ stateDiagram-v2
 |----|------|------|
 | EXP-01 | 단일 영상 출력 | 편집 결과를 1개 파일로 병합 |
 | EXP-02 | 자막 반영 | burn-in(화면 합성) 또는 soft subtitle mux |
-| EXP-03 | 더빙 오디오 믹스 | TTS 트랙을 타임라인에 맞춰 영상에 합성 |
+| EXP-03 | 더빙 오디오 믹스 | multi-track 믹스다운(화자·TTS 클립 + BGM + 원본 잔여음)을 타임라인에 맞춰 합성 |
 | EXP-04 | 속도 보정 반영 | 세그먼트별 speed(≤1.1)를 최종 렌더에 적용 |
 | EXP-05 | 방송 프리셋 | 해상도·코덱·비트레이트 프리셋 선택 |
 | EXP-06 | Export 작업 큐 | 비동기 렌더, 진행률·완료 알림 |
 | EXP-07 | 결과물 다운로드 | 로컬 저장 또는 스토리지 URL 제공 |
+| EXP-08 | 볼륨·레벨링 반영 | 클립·트랙별 gain 및 레벨링 설정을 Export에 반영 |
 
 ### 3.9 송출 (방송/송출 연동)
 
@@ -214,8 +223,8 @@ stateDiagram-v2
 ### 4.1 자막 위치·길이
 
 - 프리뷰 화면에서 자막 박스를 드래그해 위치를 조정한다.
-- 타임라인에서 자막 블록의 좌·우 핸들을 드래그해 in/out을 변경한다.
-- 숫자 입력으로 프레임/초 단위 정밀 조정을 지원한다.
+- 타임라인 Subtitle 트랙에서 자막 블록의 좌·우 핸들을 드래그해 in/out을 변경한다.
+- 위치·in/out **숫자 입력 필드는 UI에 제공하지 않는다**(타임라인·프리뷰에서만 편집).
 
 ### 4.2 속도 조절 (최대 1.1배)
 
@@ -233,8 +242,23 @@ stateDiagram-v2
 ### 4.4 미리보기·재생
 
 - 타임라인 또는 프리뷰 바에서 임의 시점으로 seek 가능하다.
-- 재생 시 영상 + 해당 시점의 TTS 더빙 + 자막 오버레이가 동기 재생된다.
+- 재생 시 영상 + 활성 트랙(화자·BGM) + 자막 오버레이가 동기 재생된다.
 - 일반 영상 편집 툴과 동일하게 재생/일시정지, 프레임 전진/후진(선택)을 지원한다.
+
+### 4.5 Multi-track 오디오
+
+- 타임라인은 NLE 스타일 **multi-track** 구조를 가진다: Video, Subtitle, Speaker×N, Background(BGM).
+- 화자별 트랙(`speaker`)에 **쉬운말 TTS가 적용된** 문장별 오디오 클립을 배치한다. 별도 TTS 트랙은 두지 않는다.
+- 배경음 트랙(`background`)은 연속 클립 또는 단일 레인으로 표시한다.
+- 트랙 타입별 라벨·색상으로 화자와 BGM을 시각적으로 구분한다.
+- 클립 선택·드래그·trim, 트랙 mute/solo/lock을 지원한다.
+
+### 4.6 볼륨·레벨링
+
+- 오디오 gain 체인: **클립 gain → 트랙 fader → 마스터 fader**.
+- 문장(클립)별 볼륨을 개별 조정할 수 있다.
+- `[레벨 자동 맞추기]` 실행 시 전체 또는 선택 트랙을 peak 또는 LUFS 기준으로 정규화한다(목표 LUFS 예: -16).
+- 배경음 ducking(ED-18)은 초기에는 수동 fader 조정, 향후 화자/TTS 구간 자동 감쇄 옵션 제공.
 
 ---
 
@@ -258,7 +282,7 @@ stateDiagram-v2
 | STT API | 음성 → 텍스트·타임코드 |
 | 쉬운말 변환 API | 뉴스 어투 쉬운말 변환·문장 단위 재변환(짧게 출력 옵션 포함) |
 | TTS API | 쉬운말 텍스트 → 음성 합성 |
-| FFmpeg(또는 동등) | 오디오 추출, 속도 변경, 자막 burn-in, mux |
+| FFmpeg(또는 동등) | 오디오 추출, multi-track 믹스, 속도 변경, 자막 burn-in, mux |
 | 송출 어댑터 | CDN 업로드, SFTP, 방송 MAM/Playout API |
 | 객체 스토리지 | 원본·중간·Export 파일 보관 |
 
@@ -311,6 +335,34 @@ stateDiagram-v2
 | speed | 재생 속도 (1.0~1.1) |
 | ttsAudioRef | TTS 오디오 파일 참조 |
 | subtitleVisible | 자막 오버레이 표시 여부(편집 툴·프리뷰용) |
+| speakerId | STT 화자 ID |
+| clipVolume | 클립(문장)별 gain (0–100% 또는 dB) |
+
+### TimelineTrack
+
+| 필드 | 설명 |
+|------|------|
+| id | 고유 ID |
+| newsItemId | 소속 뉴스 |
+| type | `video` / `subtitle` / `speaker` / `background` |
+| label | 표시 이름(예: 화자 A 앵커, BGM) |
+| order | 타임라인 세로 순서 |
+| trackVolume | 트랙 fader (0–100%) |
+| muted | mute 여부 |
+| solo | solo 여부 |
+| locked | lock 여부 |
+
+### TimelineClip
+
+| 필드 | 설명 |
+|------|------|
+| id | 고유 ID |
+| trackId | 소속 트랙 |
+| segmentId | 연결 SubtitleSegment(선택) |
+| startTime, endTime | 타임라인상 in/out |
+| clipVolume | 클립 gain |
+| speakerId | 화자 ID(화자 트랙) |
+| audioRef | 오디오 파일 참조 |
 
 ### EditProject
 
@@ -319,6 +371,10 @@ stateDiagram-v2
 | id | 고유 ID |
 | newsItemId | 소속 뉴스 |
 | segments | 편집된 세그먼트 스냅샷(JSON) |
+| tracks | TimelineTrack 배열 |
+| clips | TimelineClip 배열 |
+| masterVolume | 마스터 fader |
+| loudnessTarget | 목표 LUFS(예: -16) |
 | version | 편집 버전 |
 | savedAt | 마지막 저장 시각 |
 
@@ -359,7 +415,7 @@ stateDiagram-v2
 | 자막별 위치·길이 조정 | §3.7 ED-03, ED-04, §4.1 |
 | 속도 최대 1.1배 | §3.7 ED-05, ED-06, §4.2 |
 | 긴 문장 재치환 | §3.5 EZ-06, §3.7 ED-07, §4.3 |
-| 더빙 재생 | §3.7 ED-09, §4.4 |
+| 더빙 재생 | §3.7 ED-09, §4.4, §4.5 |
 | Export | §3.8 Export |
 | 날짜·뉴스별 관리 | §3.2 뉴스·영상 관리 |
 | 생성·편집·삭제·전송 | §3.2 MGT, §3.9 송출 |

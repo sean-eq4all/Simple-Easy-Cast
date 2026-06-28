@@ -111,6 +111,12 @@
     .btn-ghost:hover { color: var(--text); background: var(--surface2); }
     .btn-danger { background: #7f1d1d; color: #fecaca; }
     .btn-sm { padding: 0.3rem 0.625rem; font-size: 0.8125rem; }
+    .btn:disabled,
+    .btn[disabled] {
+      opacity: 0.45;
+      cursor: not-allowed;
+      pointer-events: none;
+    }
     .btn-block { width: 100%; margin-top: 0.5rem; }
 
     .auth-link {
@@ -320,7 +326,19 @@
     .upload-progress.visible { display: block; }
 
     /* Editor */
-    .editor-page { background: var(--bg); min-height: 100vh; display: flex; flex-direction: column; }
+    .editor-page {
+      background: var(--bg);
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .editor-top {
+      display: grid;
+      grid-template-columns: minmax(280px, 480px) 1fr;
+      flex-shrink: 0;
+      border-bottom: 1px solid var(--border);
+    }
 
     .editor-toolbar {
       display: flex;
@@ -344,10 +362,7 @@
     }
 
     .editor-body {
-      display: grid;
-      grid-template-columns: 1fr 320px;
-      flex: 1;
-      min-height: 0;
+      display: contents;
     }
 
     .preview-panel {
@@ -355,6 +370,7 @@
       flex-direction: column;
       padding: 1rem;
       border-right: 1px solid var(--border);
+      max-width: 480px;
     }
 
     .video-frame {
@@ -364,6 +380,8 @@
       aspect-ratio: 16/9;
       overflow: hidden;
       margin-bottom: 0.75rem;
+      max-width: 480px;
+      width: 100%;
     }
 
     .video-placeholder {
@@ -418,13 +436,47 @@
       cursor: pointer;
     }
 
-    .props-panel {
-      padding: 1rem;
-      overflow-y: auto;
+    .inspector-panel {
+      padding: 0;
+      overflow: hidden;
       background: var(--surface);
+      display: flex;
+      flex-direction: column;
+      min-height: 320px;
     }
 
-    .props-panel h4 {
+    .inspector-tabs {
+      display: flex;
+      border-bottom: 1px solid var(--border);
+      flex-shrink: 0;
+    }
+
+    .inspector-tab {
+      flex: 1;
+      padding: 0.625rem;
+      background: none;
+      border: none;
+      color: var(--muted);
+      font-size: 0.8125rem;
+      border-bottom: 2px solid transparent;
+      margin-bottom: -1px;
+    }
+
+    .inspector-tab.active {
+      color: var(--primary);
+      border-bottom-color: var(--primary);
+    }
+
+    .inspector-content {
+      padding: 1rem;
+      overflow-y: auto;
+      flex: 1;
+    }
+
+    .inspector-pane { display: none; }
+    .inspector-pane.active { display: block; }
+
+    .inspector-panel h4 {
       font-size: 0.8125rem;
       color: var(--muted);
       margin-bottom: 0.5rem;
@@ -432,18 +484,19 @@
       letter-spacing: 0.04em;
     }
 
-    .props-panel .field { margin-bottom: 0.875rem; }
+    .inspector-panel .field { margin-bottom: 0.875rem; }
 
-    .props-panel .field label {
+    .inspector-panel .field label {
       display: block;
       font-size: 0.75rem;
       color: var(--muted);
       margin-bottom: 0.25rem;
     }
 
-    .props-panel input[type="text"],
-    .props-panel input[type="number"],
-    .props-panel textarea {
+    .inspector-panel input[type="text"],
+    .inspector-panel input[type="number"],
+    .inspector-panel textarea,
+    .inspector-panel select {
       width: 100%;
       padding: 0.5rem;
       background: var(--bg);
@@ -453,11 +506,188 @@
       font-size: 0.875rem;
     }
 
-    .props-panel textarea { min-height: 60px; resize: vertical; }
+    .inspector-panel textarea { min-height: 60px; resize: vertical; }
 
-    .props-panel .readonly {
+    .inspector-panel .readonly {
       background: var(--surface2);
       color: var(--muted);
+    }
+
+    .vu-meter {
+      height: 8px;
+      background: var(--bg);
+      border-radius: 4px;
+      overflow: hidden;
+      margin-top: 0.25rem;
+    }
+
+    .vu-meter span {
+      display: block;
+      height: 100%;
+      width: 65%;
+      background: linear-gradient(90deg, #22c55e, #eab308 70%, #ef4444);
+      border-radius: 4px;
+    }
+
+    .track-list-item {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      padding: 0.5rem;
+      border: 1px solid var(--border);
+      border-radius: 4px;
+      margin-bottom: 0.375rem;
+      font-size: 0.8125rem;
+    }
+
+    .track-list-item .badge-type {
+      font-size: 0.625rem;
+      padding: 0.1rem 0.35rem;
+      border-radius: 3px;
+      flex-shrink: 0;
+    }
+
+    .badge-speaker { background: #431407; color: #fdba74; }
+    .badge-bgm { background: #3b0764; color: #d8b4fe; }
+    .badge-tts { background: #134e4a; color: #5eead4; }
+    .badge-sub { background: #1e3a5f; color: #93c5fd; }
+
+    .seg-nav-list {
+      list-style: none;
+      max-height: 140px;
+      overflow-y: auto;
+    }
+
+    .seg-nav-list li {
+      padding: 0.375rem 0.5rem;
+      font-size: 0.8125rem;
+      border-radius: 4px;
+      cursor: pointer;
+      margin-bottom: 2px;
+    }
+
+    .seg-nav-list li:hover { background: var(--surface2); }
+    .seg-nav-list li.active { background: rgba(59, 130, 246, 0.2); color: var(--primary); }
+
+    .field-label-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 0.5rem;
+      margin-bottom: 0.375rem;
+    }
+
+    .field-label-row label {
+      margin-bottom: 0;
+      font-weight: 500;
+    }
+
+    .field-meta {
+      display: grid;
+      grid-template-columns: 3.25rem 2.75rem 3.25rem;
+      gap: 0.375rem;
+      align-items: center;
+      justify-items: center;
+      flex-shrink: 0;
+    }
+
+    .meta-pill {
+      font-size: 0.6875rem;
+      font-weight: 500;
+      padding: 0.2rem 0.5rem;
+      border-radius: 999px;
+      background: var(--surface2);
+      color: var(--muted);
+      border: 1px solid var(--border);
+      font-variant-numeric: tabular-nums;
+      white-space: nowrap;
+      width: 100%;
+      text-align: center;
+      box-sizing: border-box;
+    }
+
+    .meta-pill-time {
+      background: rgba(59, 130, 246, 0.12);
+      color: #93c5fd;
+      border-color: rgba(59, 130, 246, 0.3);
+    }
+
+    .meta-pill-diff {
+      background: transparent;
+      border: none;
+      padding: 0;
+      font-size: 0.625rem;
+      color: #fbbf24;
+      text-align: center;
+    }
+
+    .meta-pill-diff.is-empty {
+      visibility: hidden;
+    }
+
+    .easy-tts-actions {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 0.5rem;
+      margin-top: 0.375rem;
+      padding: 0.375rem 0.625rem;
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      border-radius: 4px;
+    }
+
+    .easy-tts-actions.is-dirty {
+      background: rgba(234, 179, 8, 0.08);
+      border-color: rgba(234, 179, 8, 0.25);
+    }
+
+    .easy-tts-hint {
+      font-size: 0.75rem;
+      color: var(--muted);
+    }
+
+    .easy-tts-actions.is-dirty .easy-tts-hint {
+      color: #fbbf24;
+    }
+
+    .speed-field-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 0.5rem;
+      margin-bottom: 0.375rem;
+    }
+
+    .speed-field-header label {
+      margin-bottom: 0;
+    }
+
+    .speed-value {
+      font-size: 0.9375rem;
+      font-weight: 600;
+      color: #93c5fd;
+      background: rgba(59, 130, 246, 0.15);
+      border: 1px solid rgba(59, 130, 246, 0.35);
+      border-radius: 999px;
+      padding: 0.25rem 0.75rem;
+      font-variant-numeric: tabular-nums;
+      line-height: 1.2;
+      flex-shrink: 0;
+    }
+
+    .speed-slider {
+      width: 100%;
+    }
+
+    .speed-ticks {
+      display: flex;
+      justify-content: space-between;
+      margin-top: 0.125rem;
+      padding: 0 2px;
+      font-size: 0.6875rem;
+      color: var(--muted);
+      font-variant-numeric: tabular-nums;
     }
 
     .row-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 0.5rem; }
@@ -468,6 +698,10 @@
       border-top: 1px solid var(--border);
       padding: 0.75rem 1rem;
       background: var(--surface);
+      flex: 1;
+      min-height: 280px;
+      display: flex;
+      flex-direction: column;
     }
 
     .timeline-header {
@@ -479,21 +713,100 @@
       color: var(--muted);
     }
 
-    .timeline-track {
-      margin-bottom: 0.5rem;
+    .timeline-multi {
+      display: flex;
+      flex: 1;
+      min-height: 0;
+      position: relative;
     }
 
-    .timeline-track label {
-      display: block;
-      font-size: 0.6875rem;
-      color: var(--muted);
-      margin-bottom: 0.25rem;
+    .track-headers {
+      width: 168px;
+      flex-shrink: 0;
+      border-right: 1px solid var(--border);
+      padding-top: 0;
     }
+
+    .track-header {
+      height: 32px;
+      padding: 0 0.375rem;
+      border-bottom: 1px solid var(--border);
+      font-size: 0.6875rem;
+    }
+
+    .track-header-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      height: 100%;
+      gap: 0.25rem;
+    }
+
+    .track-header-name {
+      font-weight: 600;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      flex: 1;
+      min-width: 0;
+    }
+
+    .track-header-controls {
+      display: flex;
+      align-items: center;
+      justify-content: flex-end;
+      gap: 0.2rem;
+      flex-shrink: 0;
+      width: 36px;
+    }
+
+    .track-header-controls--empty {
+      visibility: hidden;
+      pointer-events: none;
+    }
+
+    .track-header-controls button {
+      width: 16px;
+      height: 16px;
+      padding: 0;
+      line-height: 14px;
+      font-size: 0.5625rem;
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: 2px;
+      color: var(--muted);
+      cursor: pointer;
+    }
+
+    .track-header-controls button.active {
+      color: var(--primary);
+      border-color: var(--primary);
+    }
+
+    .track-lane-spacer {
+      height: calc(100% - 6px);
+      margin: 3px 0;
+      flex-shrink: 0;
+    }
+
+    .track-lanes {
+      flex: 1;
+      overflow-x: auto;
+      position: relative;
+    }
+
+    .timeline-track {
+      margin-bottom: 0;
+      height: 32px;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .timeline-track label { display: none; }
 
     .track-bar {
-      height: 28px;
+      height: 32px;
       background: var(--bg);
-      border-radius: 4px;
+      border-radius: 0;
       position: relative;
       overflow: hidden;
     }
@@ -522,26 +835,74 @@
       cursor: pointer;
       opacity: 0.85;
       min-width: 40px;
+      height: calc(100% - 6px);
+      margin: 3px 1px;
+      display: flex;
+      align-items: center;
     }
 
-    .seg-block.selected { outline: 2px solid #fff; opacity: 1; }
-    .seg-block:nth-child(2) { flex: 1.2; background: #2563eb; }
-    .seg-block:nth-child(3) { flex: 0.9; background: #1d4ed8; }
-    .seg-block:nth-child(4) { flex: 1.1; background: #1e40af; }
-    .seg-block:nth-child(5) { flex: 0.8; background: #1e3a8a; }
+    .seg-block.selected { outline: 2px solid #fff; opacity: 1; z-index: 1; }
 
-    .track-wave {
+    .clip-speaker {
+      background: linear-gradient(180deg, #ea580c 0%, #c2410c 100%);
+      border-radius: 3px;
+      height: calc(100% - 6px);
+      margin: 3px 1px;
+      min-width: 48px;
+      font-size: 0.5625rem;
+      padding: 0 4px;
+      display: flex;
+      align-items: center;
+      color: #fff;
+      cursor: pointer;
+      opacity: 0.9;
+    }
+
+    .clip-speaker.b { background: linear-gradient(180deg, #16a34a 0%, #15803d 100%); }
+
+    .clip-bgm {
+      height: calc(100% - 6px);
+      margin: 3px;
+      background: linear-gradient(90deg, #6b21a8 0%, #7e22ce 50%, #6b21a8 100%);
+      opacity: 0.55;
+      border-radius: 2px;
+    }
+
+    .clip-tts {
+      background: linear-gradient(180deg, #0d9488 0%, #0f766e 100%);
+      border-radius: 3px;
+      height: calc(100% - 6px);
+      margin: 3px 1px;
+      min-width: 40px;
+      font-size: 0.5625rem;
+      padding: 0 4px;
+      display: flex;
+      align-items: center;
+      color: #fff;
+      cursor: pointer;
+    }
+
+    .clip-tts.selected { outline: 2px solid #fff; }
+
+    .track-lane-row {
+      display: flex;
       height: 100%;
-      background: repeating-linear-gradient(
-        90deg,
-        transparent,
-        transparent 2px,
-        #4ade80 2px,
-        #4ade80 3px
-      );
-      opacity: 0.4;
-      border-radius: 4px;
+      align-items: stretch;
+      padding: 0 2px;
     }
+
+    .timeline-footer {
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+      margin-top: 0.5rem;
+      padding-top: 0.5rem;
+      border-top: 1px solid var(--border);
+      font-size: 0.8125rem;
+      color: var(--muted);
+    }
+
+    .master-vol { flex: 1; max-width: 200px; }
 
     .playhead {
       position: absolute;
@@ -551,12 +912,17 @@
       background: #f97316;
       left: 28%;
       pointer-events: none;
-      z-index: 2;
+      z-index: 10;
     }
 
-    .timeline-wrap { position: relative; }
+    .timeline-wrap { position: relative; flex: 1; min-height: 0; }
 
-    /* Modal */
+    @media (max-width: 1024px) {
+      .editor-top { grid-template-columns: 1fr; }
+      .preview-panel { max-width: none; border-right: none; border-bottom: 1px solid var(--border); }
+      .sidebar { display: none; }
+    }
+
     .modal-backdrop {
       display: none;
       position: fixed;
@@ -626,11 +992,6 @@
     }
 
     .toast.show { opacity: 1; transform: translateY(0); }
-
-    @media (max-width: 1024px) {
-      .editor-body { grid-template-columns: 1fr; }
-      .sidebar { display: none; }
-    }
   </style>
 </head>
 <body>
@@ -715,11 +1076,12 @@
       <button class="btn btn-ghost btn-sm">되돌리기</button>
       <button class="btn btn-ghost btn-sm">다시실행</button>
       <label><input type="checkbox" id="subtitle-toggle" checked /> 자막 보이기</label>
+      <button class="btn btn-secondary btn-sm" onclick="showToast('전체 트랙 레벨을 -16 LUFS에 맞췄습니다.')">레벨 자동 맞추기</button>
       <div class="spacer"></div>
       <button class="btn btn-secondary btn-sm" data-nav="news-detail" data-tab="export">Export</button>
       <button class="btn btn-primary btn-sm" data-nav="news-detail" data-tab="delivery">송출</button>
     </div>
-    <div class="editor-body">
+    <div class="editor-top">
       <div class="preview-panel">
         <div class="video-frame">
           <div class="video-placeholder" role="img" aria-label="KBS 뉴스 영상 프리뷰"></div>
@@ -732,76 +1094,218 @@
         </div>
         <input type="range" class="seek-bar" min="0" max="342" value="83" />
       </div>
-      <div class="props-panel">
-        <p style="font-size:0.75rem;color:var(--muted);margin-bottom:0.75rem;">세그먼트 #2 · 00:00:18 – 00:00:24</p>
-        <h4>원문 (STT)</h4>
-        <div class="field">
-          <textarea class="readonly" readonly>사상 최대 규모의 분기 실적을 발표했습니다.</textarea>
+      <div class="inspector-panel">
+        <div class="inspector-tabs">
+          <button class="inspector-tab active" data-inspector="text" onclick="switchInspectorTab('text')">텍스트</button>
+          <button class="inspector-tab" data-inspector="audio" onclick="switchInspectorTab('audio')">오디오</button>
+          <button class="inspector-tab" data-inspector="tracks" onclick="switchInspectorTab('tracks')">트랙</button>
         </div>
-        <h4>쉬운말 (편집 가능)</h4>
-        <div class="field">
-          <textarea id="easy-text">이번 세 달 동안 벌어들인 돈이 지금까지 중에서 가장 많다고 발표했습니다.</textarea>
-        </div>
-        <div class="row-2">
-          <div class="field">
-            <label>위치 X</label>
-            <input type="number" value="960" />
+        <div class="inspector-content">
+          <div class="inspector-pane active" id="inspector-text">
+            <p id="seg-meta" style="font-size:0.75rem;color:var(--muted);margin-bottom:0.5rem;">세그먼트 #2 · 00:00:18 – 00:00:24 · 화자 A</p>
+            <div class="field">
+              <div class="field-label-row">
+                <label>원문 (STT)</label>
+                <div class="field-meta">
+                  <span class="meta-pill meta-pill-diff is-empty" aria-hidden="true">—</span>
+                  <span class="meta-pill" id="original-char-inline">0자</span>
+                  <span class="meta-pill meta-pill-time" id="original-play-time" title="원문 구간 재생 시간">0초</span>
+                </div>
+              </div>
+              <textarea id="original-text" class="readonly" readonly>사상 최대 규모의 분기 실적을 발표했습니다.</textarea>
+            </div>
+            <div class="field">
+              <div class="field-label-row">
+                <label>쉬운말 (편집 가능)</label>
+                <div class="field-meta">
+                  <span class="meta-pill meta-pill-diff is-empty" id="char-diff-inline">—</span>
+                  <span class="meta-pill" id="easy-char-inline">0자</span>
+                  <span class="meta-pill meta-pill-time" id="easy-play-time" title="TTS 예상 재생 시간">0초</span>
+                </div>
+              </div>
+              <textarea id="easy-text">이번 세 달 동안 벌어들인 돈이 지금까지 중에서 가장 많다고 발표했습니다.</textarea>
+              <div class="easy-tts-actions" id="easy-tts-actions">
+                <span class="easy-tts-hint" id="easy-tts-hint">쉬운말 편집 후 TTS를 다시 생성할 수 있습니다.</span>
+                <button class="btn btn-primary btn-sm" id="rerun-tts-btn" type="button" disabled onclick="rerunTts()">TTS 재합성</button>
+              </div>
+            </div>
+            <div class="field speed-field">
+              <div class="speed-field-header">
+                <label>속도 (0.9 – 1.1)</label>
+                <span class="speed-value" id="speed-label">1.00×</span>
+              </div>
+              <input type="range" id="speed-slider" class="speed-slider" min="90" max="110" value="100" />
+              <div class="speed-ticks" aria-hidden="true">
+                <span>0.9</span>
+                <span>1</span>
+                <span>1.1</span>
+              </div>
+            </div>
+            <div class="btn-group">
+              <button class="btn btn-secondary btn-sm">원 구간 길이에 맞추기</button>
+              <button class="btn btn-secondary btn-sm" onclick="openModal(false)">쉬운말 재변환</button>
+              <button class="btn btn-secondary btn-sm" onclick="openModal(true)">짧게 출력 재변환</button>
+              <button class="btn btn-ghost btn-sm" onclick="showToast('TTS 미리듣기 재생 중…')">TTS 미리듣기</button>
+            </div>
           </div>
-          <div class="field">
-            <label>위치 Y</label>
-            <input type="number" value="880" />
+          <div class="inspector-pane" id="inspector-audio">
+            <h4>클립 볼륨 (선택 문장)</h4>
+            <div class="field">
+              <label>Gain</label>
+              <input type="range" id="clip-volume" min="0" max="100" value="85" style="width:100%;" oninput="document.getElementById('clip-vol-label').textContent=this.value+'%'" />
+              <span id="clip-vol-label" style="font-size:0.75rem;color:var(--muted);">85%</span>
+              <div class="vu-meter"><span id="clip-vu" style="width:65%"></span></div>
+            </div>
+            <h4>트랙 Fader</h4>
+            <div class="field">
+              <label id="track-fader-label">화자 A (앵커)</label>
+              <input type="range" id="track-volume" min="0" max="100" value="100" style="width:100%;" />
+            </div>
+            <h4>마스터</h4>
+            <div class="field">
+              <label>마스터 볼륨 · 목표 -16 LUFS</label>
+              <input type="range" id="master-volume-inspector" min="0" max="100" value="92" style="width:100%;" />
+            </div>
+            <div class="btn-group">
+              <button class="btn btn-secondary btn-sm" onclick="showToast('전체 트랙 레벨을 -16 LUFS에 맞췄습니다.')">레벨 자동 맞추기</button>
+              <button class="btn btn-ghost btn-sm" onclick="showToast('선택 트랙만 레벨 조정했습니다.')">선택 트랙만</button>
+            </div>
           </div>
-        </div>
-        <div class="row-2">
-          <div class="field">
-            <label>표시 In</label>
-            <input type="text" value="00:00:18.000" />
+          <div class="inspector-pane" id="inspector-tracks">
+            <h4>트랙 목록</h4>
+            <div class="track-list-item">
+              <span class="badge-type badge-sub">Sub</span>
+              <span style="flex:1">Subtitle</span>
+              <button class="btn btn-ghost btn-sm track-mute" data-track="sub">M</button>
+              <button class="btn btn-ghost btn-sm track-solo" data-track="sub">S</button>
+            </div>
+            <div class="track-list-item">
+              <span class="badge-type badge-speaker">Spk</span>
+              <span style="flex:1">화자 A (앵커 · TTS)</span>
+              <button class="btn btn-ghost btn-sm track-mute" data-track="spk-a">M</button>
+              <button class="btn btn-ghost btn-sm track-solo active" data-track="spk-a">S</button>
+            </div>
+            <div class="track-list-item">
+              <span class="badge-type badge-speaker">Spk</span>
+              <span style="flex:1">화자 B (리포터 · TTS)</span>
+              <button class="btn btn-ghost btn-sm track-mute" data-track="spk-b">M</button>
+              <button class="btn btn-ghost btn-sm track-solo" data-track="spk-b">S</button>
+            </div>
+            <div class="track-list-item">
+              <span class="badge-type badge-bgm">BGM</span>
+              <span style="flex:1">배경음</span>
+              <button class="btn btn-ghost btn-sm track-mute" data-track="bgm">M</button>
+              <button class="btn btn-ghost btn-sm track-solo" data-track="bgm">S</button>
+            </div>
+            <h4 style="margin-top:0.75rem;">화자 매핑</h4>
+            <div class="field">
+              <label>선택 세그먼트 화자</label>
+              <select id="speaker-map">
+                <option value="A" selected>화자 A (앵커)</option>
+                <option value="B">화자 B (리포터)</option>
+              </select>
+            </div>
+            <label class="checkbox-row">
+              <input type="checkbox" /> BGM ducking (화자 구간 자동 감쇄)
+            </label>
+            <h4 style="margin-top:0.75rem;">세그먼트 목록</h4>
+            <ul class="seg-nav-list" id="seg-nav-list"></ul>
           </div>
-          <div class="field">
-            <label>표시 Out</label>
-            <input type="text" value="00:00:24.200" />
-          </div>
-        </div>
-        <div class="field">
-          <label>속도 (1.0 – 1.1)</label>
-          <input type="range" min="100" max="110" value="105" style="width:100%;" />
-          <span style="font-size:0.75rem;color:var(--muted);">1.05×</span>
-        </div>
-        <div class="btn-group">
-          <button class="btn btn-secondary btn-sm">원 구간 길이에 맞추기</button>
-          <button class="btn btn-secondary btn-sm" onclick="openModal(false)">쉬운말 재변환</button>
-          <button class="btn btn-secondary btn-sm" onclick="openModal(true)">짧게 출력 재변환</button>
-          <button class="btn btn-ghost btn-sm" onclick="showToast('TTS 미리듣기 재생 중…')">TTS 미리듣기</button>
         </div>
       </div>
     </div>
     <div class="timeline-panel">
       <div class="timeline-header">
-        <span>타임라인</span>
+        <span>Multi-track Timeline</span>
         <span>줌 <button class="btn btn-ghost btn-sm">−</button> <button class="btn btn-ghost btn-sm">+</button></span>
       </div>
-      <div class="timeline-wrap">
-        <div class="playhead"></div>
-        <div class="timeline-track">
-          <label>Video</label>
-          <div class="track-bar"><div class="track-video"></div></div>
-        </div>
-        <div class="timeline-track">
-          <label>Subtitle</label>
-          <div class="track-bar">
-            <div class="track-blocks">
-              <div class="seg-block" data-seg="1" onclick="selectSeg(1)">오프닝</div>
-              <div class="seg-block selected" data-seg="2" onclick="selectSeg(2)">경제 정책</div>
-              <div class="seg-block" data-seg="3" onclick="selectSeg(3)">물가 안정</div>
-              <div class="seg-block" data-seg="4" onclick="selectSeg(4)">전문가 의견</div>
-              <div class="seg-block" data-seg="5" onclick="selectSeg(5)">마무리</div>
+      <div class="timeline-multi">
+        <div class="track-headers">
+          <div class="track-header">
+            <div class="track-header-row">
+              <span class="track-header-name">Video</span>
+              <div class="track-header-controls track-header-controls--empty"><button>M</button><button>S</button></div>
+            </div>
+          </div>
+          <div class="track-header">
+            <div class="track-header-row">
+              <span class="track-header-name">Subtitle</span>
+              <div class="track-header-controls"><button class="track-mute" data-track="sub">M</button><button class="track-solo" data-track="sub">S</button></div>
+            </div>
+          </div>
+          <div class="track-header">
+            <div class="track-header-row">
+              <span class="track-header-name">화자 A · TTS</span>
+              <div class="track-header-controls"><button class="track-mute" data-track="spk-a">M</button><button class="track-solo" data-track="spk-a">S</button></div>
+            </div>
+          </div>
+          <div class="track-header">
+            <div class="track-header-row">
+              <span class="track-header-name">화자 B · TTS</span>
+              <div class="track-header-controls"><button class="track-mute" data-track="spk-b">M</button><button class="track-solo" data-track="spk-b">S</button></div>
+            </div>
+          </div>
+          <div class="track-header">
+            <div class="track-header-row">
+              <span class="track-header-name">BGM</span>
+              <div class="track-header-controls"><button class="track-mute" data-track="bgm">M</button><button class="track-solo" data-track="bgm">S</button></div>
             </div>
           </div>
         </div>
-        <div class="timeline-track">
-          <label>TTS / Audio</label>
-          <div class="track-bar"><div class="track-wave"></div></div>
+        <div class="track-lanes timeline-wrap">
+          <div class="playhead"></div>
+          <div class="timeline-track"><div class="track-bar"><div class="track-video"></div></div></div>
+          <div class="timeline-track">
+            <div class="track-bar">
+              <div class="track-lane-row">
+                <div class="seg-block" data-seg="1" style="flex:0.8" onclick="selectSeg(1)">#1 오프닝</div>
+                <div class="track-lane-spacer" style="flex:0.15"></div>
+                <div class="seg-block selected" data-seg="2" style="flex:1.2" onclick="selectSeg(2)">#2 실적</div>
+                <div class="seg-block" data-seg="3" style="flex:0.9" onclick="selectSeg(3)">#3 물가</div>
+                <div class="track-lane-spacer" style="flex:0.35"></div>
+                <div class="seg-block" data-seg="4" style="flex:1.1" onclick="selectSeg(4)">#4 현장</div>
+                <div class="track-lane-spacer" style="flex:0.25"></div>
+                <div class="seg-block" data-seg="5" style="flex:0.5" onclick="selectSeg(5)">#5 앵커</div>
+                <div class="track-lane-spacer" style="flex:1.35"></div>
+                <div class="seg-block" data-seg="6" style="flex:0.7" onclick="selectSeg(6)">#6 마무리</div>
+              </div>
+            </div>
+          </div>
+          <div class="timeline-track">
+            <div class="track-bar">
+              <div class="track-lane-row">
+                <div class="clip-speaker" data-seg="1" style="flex:0.8" onclick="selectSeg(1)">TTS·앵커</div>
+                <div class="track-lane-spacer" style="flex:0.15"></div>
+                <div class="clip-speaker selected" data-seg="2" style="flex:1.2" onclick="selectSeg(2)">TTS·앵커</div>
+                <div class="clip-speaker" data-seg="3" style="flex:0.9" onclick="selectSeg(3)">TTS·앵커</div>
+                <div class="track-lane-spacer" style="flex:0.35"></div>
+                <div class="track-lane-spacer" style="flex:1.1"></div>
+                <div class="track-lane-spacer" style="flex:0.25"></div>
+                <div class="clip-speaker" data-seg="5" style="flex:0.5" onclick="selectSeg(5)">TTS·앵커</div>
+                <div class="track-lane-spacer" style="flex:1.35"></div>
+                <div class="clip-speaker" data-seg="6" style="flex:0.7" onclick="selectSeg(6)">TTS·앵커</div>
+              </div>
+            </div>
+          </div>
+          <div class="timeline-track">
+            <div class="track-bar">
+              <div class="track-lane-row">
+                <div class="track-lane-spacer" style="flex:3.4"></div>
+                <div class="clip-speaker b" data-seg="4" style="flex:1.1" onclick="selectSeg(4)">TTS·현장</div>
+                <div class="track-lane-spacer" style="flex:0.25"></div>
+                <div class="track-lane-spacer" style="flex:0.5"></div>
+                <div class="track-lane-spacer" style="flex:1.35"></div>
+                <div class="track-lane-spacer" style="flex:0.7"></div>
+              </div>
+            </div>
+          </div>
+          <div class="timeline-track"><div class="track-bar"><div class="clip-bgm"></div></div></div>
         </div>
+      </div>
+      <div class="timeline-footer">
+        <span>Playhead 00:01:23</span>
+        <label class="master-vol">마스터 <input type="range" min="0" max="100" value="92" style="width:100%;vertical-align:middle;" /></label>
+        <span>-16 LUFS</span>
       </div>
     </div>
   </div>
@@ -836,29 +1340,58 @@
       1: {
         original: '안녕하세요. 오늘의 주요 뉴스를 전해드립니다.',
         easy: '안녕하세요. 오늘 주요 뉴스를 알려드릴게요.',
-        time: '00:00:00 – 00:00:08'
+        time: '00:00:00 – 00:00:08',
+        speaker: 'A',
+        speakerLabel: '화자 A · TTS',
+        clipVolume: 90
       },
       2: {
         original: '사상 최대 규모의 분기 실적을 발표했습니다.',
         easy: '이번 세 달 동안 벌어들인 돈이 지금까지 중에서 가장 많다고 발표했습니다.',
-        time: '00:00:18 – 00:00:24'
+        time: '00:00:18 – 00:00:24',
+        speaker: 'A',
+        speakerLabel: '화자 A · TTS',
+        clipVolume: 85
       },
       3: {
         original: '이번 조치는 물가 안정을 목표로 합니다.',
         easy: '이번 조치는 물가를 잡는 것이 목표예요.',
-        time: '00:00:24 – 00:00:30'
+        time: '00:00:24 – 00:00:30',
+        speaker: 'A',
+        speakerLabel: '화자 A · TTS',
+        clipVolume: 88
       },
       4: {
-        original: '전문가들은 신중한 접근이 필요하다고 말했습니다.',
-        easy: '전문가들은 조심해서 접근해야 한다고 말했어요.',
-        time: '00:01:05 – 00:01:14'
+        original: '현장 연결입니다. 반도체 공장 가동률이 크게 올랐습니다.',
+        easy: '현장입니다. 반도체 공장이 더 많이 돌아가고 있어요.',
+        time: '00:01:05 – 00:01:14',
+        speaker: 'B',
+        speakerLabel: '화자 B · TTS',
+        clipVolume: 82
       },
       5: {
+        original: '네, 현장 연결 잘 들었습니다. 스튜디오로 돌아와서 마무리하겠습니다.',
+        easy: '네, 현장 이야기 잘 들었어요. 다시 스튜디오에서 마무리할게요.',
+        time: '00:01:14 – 00:01:18',
+        speaker: 'A',
+        speakerLabel: '화자 A · TTS',
+        clipVolume: 88
+      },
+      6: {
         original: '지금까지 뉴스였습니다. 감사합니다.',
         easy: '지금까지 뉴스였어요. 감사합니다.',
-        time: '00:05:30 – 00:05:42'
+        time: '00:05:30 – 00:05:42',
+        speaker: 'A',
+        speakerLabel: '화자 A · TTS',
+        clipVolume: 90
       }
     };
+
+    let currentSegId = 2;
+
+    const ttsSnapshot = Object.fromEntries(
+      Object.entries(segments).map(([id, seg]) => [id, seg.easy])
+    );
 
     let currentTab = 'overview';
 
@@ -1172,21 +1705,161 @@
       });
     }
 
+    function parseTimecode(tc) {
+      const parts = tc.trim().split(':').map(Number);
+      if (parts.length === 3) return parts[0] * 3600 + parts[1] * 60 + parts[2];
+      return 0;
+    }
+
+    function getSegmentDurationSec(timeStr) {
+      const [start, end] = timeStr.split(/[–-]/).map((s) => s.trim());
+      return Math.max(0, parseTimecode(end) - parseTimecode(start));
+    }
+
+    function formatDurationSec(sec) {
+      if (sec % 1 === 0) return `${sec}초`;
+      return `${sec.toFixed(1)}초`;
+    }
+
+    function countChars(text) {
+      return [...text].length;
+    }
+
+    function updateInspectorStats() {
+      const original = document.getElementById('original-text')?.value ?? '';
+      const easy = document.getElementById('easy-text')?.value ?? '';
+      const seg = segments[currentSegId];
+      if (!seg) return;
+
+      const origCount = countChars(original);
+      const easyCount = countChars(easy);
+      const diff = easyCount - origCount;
+      const originalSec = getSegmentDurationSec(seg.time);
+      const speed = (document.getElementById('speed-slider')?.value ?? 100) / 100;
+      const baseEasySec = origCount > 0 ? originalSec * (easyCount / origCount) : originalSec;
+      const easyPlaySec = Math.round((baseEasySec / speed) * 10) / 10;
+
+      document.getElementById('original-char-inline').textContent = `${origCount}자`;
+      document.getElementById('original-play-time').textContent = formatDurationSec(originalSec);
+      document.getElementById('easy-char-inline').textContent = `${easyCount}자`;
+      document.getElementById('easy-play-time').textContent = formatDurationSec(easyPlaySec);
+
+      const diffEl = document.getElementById('char-diff-inline');
+      if (diffEl) {
+        if (diff === 0) {
+          diffEl.textContent = '—';
+          diffEl.classList.add('is-empty');
+        } else {
+          diffEl.textContent = diff > 0 ? `+${diff}자` : `${diff}자`;
+          diffEl.classList.remove('is-empty');
+        }
+      }
+
+      updateEasyTtsState();
+    }
+
+    function updateEasyTtsState() {
+      const easy = document.getElementById('easy-text')?.value ?? '';
+      const lastTts = ttsSnapshot[currentSegId] ?? '';
+      const isDirty = easy !== lastTts;
+      const actions = document.getElementById('easy-tts-actions');
+      const btn = document.getElementById('rerun-tts-btn');
+      const hint = document.getElementById('easy-tts-hint');
+
+      if (actions) {
+        actions.classList.toggle('is-dirty', isDirty);
+      }
+      if (btn) {
+        btn.disabled = !isDirty;
+      }
+      if (hint) {
+        hint.textContent = isDirty
+          ? '텍스트가 변경되었습니다. TTS를 다시 생성하세요.'
+          : '쉬운말 편집 후 TTS를 다시 생성할 수 있습니다.';
+      }
+    }
+
+    function rerunTts() {
+      const btn = document.getElementById('rerun-tts-btn');
+      if (btn?.disabled) return;
+      const easyEl = document.getElementById('easy-text');
+      const easy = easyEl?.value ?? '';
+      const seg = segments[currentSegId];
+      if (!seg || !easyEl) return;
+
+      seg.easy = easy;
+      ttsSnapshot[currentSegId] = easy;
+      document.getElementById('subtitle-overlay').textContent = easy;
+      updateEasyTtsState();
+      showToast('TTS 재합성이 시작되었습니다.');
+    }
+
+    function switchInspectorTab(tab) {
+      document.querySelectorAll('.inspector-tab').forEach((t) => {
+        t.classList.toggle('active', t.dataset.inspector === tab);
+      });
+      document.querySelectorAll('.inspector-pane').forEach((p) => {
+        p.classList.toggle('active', p.id === 'inspector-' + tab);
+      });
+    }
+
+    function initSegNavList() {
+      const list = document.getElementById('seg-nav-list');
+      if (!list) return;
+      list.innerHTML = Object.entries(segments)
+        .map(
+          ([id, seg]) =>
+            `<li class="${Number(id) === currentSegId ? 'active' : ''}" onclick="selectSeg(${id})">#${id} ${seg.time} — ${seg.easy.slice(0, 18)}…</li>`
+        )
+        .join('');
+    }
+
+    function toggleTrackBtn(btn) {
+      btn.classList.toggle('active');
+    }
+
+    function bindTrackControls() {
+      document.querySelectorAll('.track-mute, .track-solo').forEach((btn) => {
+        btn.addEventListener('click', (e) => {
+          e.stopPropagation();
+          const track = btn.dataset.track;
+          if (btn.classList.contains('track-solo')) {
+            document.querySelectorAll(`.track-solo[data-track="${track}"]`).forEach((b) => b.classList.toggle('active'));
+          } else {
+            document.querySelectorAll(`.track-mute[data-track="${track}"]`).forEach((b) => b.classList.toggle('active'));
+          }
+        });
+      });
+    }
+
     function selectSeg(id) {
       const seg = segments[id];
       if (!seg) return;
-      document.querySelectorAll('.seg-block').forEach((b) => b.classList.toggle('selected', Number(b.dataset.seg) === id));
+      currentSegId = Number(id);
+      document.querySelectorAll('.seg-block, .clip-speaker[data-seg]').forEach((b) => {
+        b.classList.toggle('selected', Number(b.dataset.seg) === currentSegId);
+      });
       document.getElementById('subtitle-overlay').textContent = seg.easy;
       document.getElementById('easy-text').value = seg.easy;
-      document.querySelector('.props-panel p').textContent = `세그먼트 #${id} · ${seg.time}`;
+      document.getElementById('original-text').value = seg.original;
+      document.getElementById('seg-meta').textContent = `세그먼트 #${id} · ${seg.time} · ${seg.speakerLabel}`;
+      document.getElementById('clip-volume').value = seg.clipVolume;
+      document.getElementById('clip-vol-label').textContent = seg.clipVolume + '%';
+      document.getElementById('clip-vu').style.width = seg.clipVolume + '%';
+      document.getElementById('track-fader-label').textContent = seg.speakerLabel + (seg.speaker === 'A' ? ' (앵커)' : ' (리포터)');
+      document.getElementById('speaker-map').value = seg.speaker;
+      initSegNavList();
+      updateInspectorStats();
     }
 
     function openModal(short) {
+      const seg = segments[currentSegId];
       document.getElementById('modal-title').textContent = short ? '짧게 출력 재변환' : '쉬운말 재변환';
       document.getElementById('modal-short').checked = short;
+      document.querySelector('#reconvert-modal textarea.readonly').value = seg.original;
       document.getElementById('modal-result').value = short
-        ? '정부가 오늘 새 경제 정책을 발표했어요.'
-        : '정부가 오늘 새로운 경제 정책을 발표했습니다.';
+        ? seg.easy.replace('발표했습니다', '발표했어요').slice(0, Math.floor(seg.easy.length * 0.85))
+        : seg.easy;
       document.getElementById('reconvert-modal').classList.add('open');
     }
 
@@ -1195,10 +1868,13 @@
     }
 
     function applyModal() {
-      document.getElementById('easy-text').value = document.getElementById('modal-result').value;
-      document.getElementById('subtitle-overlay').textContent = document.getElementById('modal-result').value;
+      const result = document.getElementById('modal-result').value;
+      document.getElementById('easy-text').value = result;
+      document.getElementById('subtitle-overlay').textContent = result;
+      segments[currentSegId].easy = result;
       closeModal();
-      showToast('쉬운말이 적용되었습니다. TTS 재합성 대기 중…');
+      updateInspectorStats();
+      showToast('쉬운말이 적용되었습니다. TTS 재합성을 실행하세요.');
     }
 
     function showToast(msg) {
@@ -1211,6 +1887,20 @@
     document.getElementById('subtitle-toggle').addEventListener('change', (e) => {
       document.getElementById('subtitle-overlay').classList.toggle('hidden', !e.target.checked);
     });
+
+    document.getElementById('speed-slider')?.addEventListener('input', (e) => {
+      document.getElementById('speed-label').textContent = (e.target.value / 100).toFixed(2) + '×';
+      updateInspectorStats();
+    });
+
+    document.getElementById('easy-text')?.addEventListener('input', (e) => {
+      segments[currentSegId].easy = e.target.value;
+      updateInspectorStats();
+    });
+
+    initSegNavList();
+    bindTrackControls();
+    selectSeg(currentSegId);
 
     document.addEventListener('click', (e) => {
       const nav = e.target.closest('[data-nav]');
